@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
+	"context"
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
 	"strings"
 
+	"github.com/peterbourgon/ff/v3/ffcli"
 	"moul.io/captcha/captcha"
 	"moul.io/srand"
 )
@@ -18,31 +21,64 @@ func main() {
 	}
 }
 
-func run(_ []string) error {
-	rand.Seed(srand.Fast())
+func run(args []string) error {
+	// CLI configuration
+	var (
+		fs           = flag.NewFlagSet("generate-fake-data", flag.ExitOnError)
+		seed         = fs.Int64("seed", 0, "random seed (0 means automatic)")
+		maxRetries   = fs.Uint64("retries", 3, "failures allowed (0 means unlimited)")
+		engineChoice = fs.String("engine", "random", "captcha engine to use (banner, math, random by default)")
+	)
 
-	// init captcha and print the question
-	captcha := captcha.NewBannerCaptcha()
-	question, err := captcha.Question()
-	if err != nil {
-		return fmt.Errorf("init captcha: %w", err)
-	}
-	fmt.Println(question)
+	root := &ffcli.Command{
+		Name:    "captcha [FLAGS]",
+		FlagSet: fs,
+		Exec: func(ctx context.Context, args []string) error {
+			if len(args) > 0 {
+				return flag.ErrHelp
+			}
+			if *seed != 0 {
+				rand.Seed(*seed)
+			} else {
+				rand.Seed(srand.Fast())
+			}
 
-	// read and check the user input
-	reader := bufio.NewReader(os.Stdin)
-	for i := 0; i < 10; i++ {
-		fmt.Print("-> ")
-		text, _ := reader.ReadString('\n')
-		// convert CRLF to LF
-		text = strings.ReplaceAll(text, "\n", "")
-		valid, err := captcha.Validate(text)
-		if err != nil {
-			return fmt.Errorf("validate answer: %w", err)
-		}
-		if valid {
-			return nil
-		}
+			// init captcha and print the question
+			var engine captcha.Captcha
+			switch *engineChoice {
+			case "math":
+				engine = captcha.NewMathCaptcha()
+			case "banner":
+				engine = captcha.NewBannerCaptcha()
+			case "random":
+				engine = captcha.NewRandomCaptcha()
+			default:
+				return fmt.Errorf("undefined captcha engine: %q", *engineChoice) // nolint:goerr113
+			}
+			question, err := engine.Question()
+			if err != nil {
+				return fmt.Errorf("init captcha: %w", err)
+			}
+			fmt.Println(question)
+
+			// read and check the user input
+			reader := bufio.NewReader(os.Stdin)
+			for i := uint64(0); *maxRetries == 0 || i < *maxRetries; i++ {
+				fmt.Print("-> ")
+				text, _ := reader.ReadString('\n')
+				// convert CRLF to LF
+				text = strings.ReplaceAll(text, "\n", "")
+				valid, err := engine.Validate(text)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "error: %v\n", err)
+					continue
+				}
+				if valid {
+					return nil
+				}
+			}
+			return fmt.Errorf("too many failures") // nolint:goerr113
+		},
 	}
-	return fmt.Errorf("too many fails") // nolint:goerr113
+	return root.ParseAndRun(context.Background(), args[1:])
 }

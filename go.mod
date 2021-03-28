@@ -3,7 +3,7 @@ module moul.io/captcha
 go 1.13
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/peterbourgon/ff/v3 v3.0.0
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/tailscale/depaware v0.0.0-20201214215404-77d1e9757027
 	go.uber.org/goleak v1.1.10
