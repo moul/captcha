@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"moul.io/banner"
+	"moul.io/captcha/captcha"
 	"moul.io/srand"
 )
 
@@ -21,19 +21,26 @@ func main() {
 func run(_ []string) error {
 	rand.Seed(srand.Fast())
 
-	letterRunes := []rune("abcdefghijklmnopqrstuvwxyz")
-	b := make([]rune, 5)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))] // nolint:gosec
+	// init captcha and print the question
+	captcha := captcha.NewBannerCaptcha()
+	question, err := captcha.Question()
+	if err != nil {
+		return fmt.Errorf("init captcha: %w", err)
 	}
-	fmt.Println(banner.Inline(string(b)))
+	fmt.Println(question)
+
+	// read and check the user input
 	reader := bufio.NewReader(os.Stdin)
 	for i := 0; i < 10; i++ {
 		fmt.Print("-> ")
 		text, _ := reader.ReadString('\n')
 		// convert CRLF to LF
 		text = strings.ReplaceAll(text, "\n", "")
-		if strings.Compare(string(b), text) == 0 {
+		valid, err := captcha.Validate(text)
+		if err != nil {
+			return fmt.Errorf("validate answer: %w", err)
+		}
+		if valid {
 			return nil
 		}
 	}
