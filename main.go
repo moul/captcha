@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"strings"
@@ -15,13 +16,13 @@ import (
 )
 
 func main() {
-	if err := run(os.Args); err != nil {
+	if err := run(os.Args, os.Stdin); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(args []string) error {
+func run(args []string, inputStream io.Reader) error {
 	// CLI configuration
 	var (
 		fs           = flag.NewFlagSet("generate-fake-data", flag.ExitOnError)
@@ -62,7 +63,7 @@ func run(args []string) error {
 			fmt.Println(question)
 
 			// read and check the user input
-			reader := bufio.NewReader(os.Stdin)
+			reader := bufio.NewReader(inputStream)
 			for i := uint64(0); *maxRetries == 0 || i < *maxRetries; i++ {
 				fmt.Print("-> ")
 				text, _ := reader.ReadString('\n')
