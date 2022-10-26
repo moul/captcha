@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/peterbourgon/ff/v3/ffcli"
 	"moul.io/captcha/captcha"
@@ -29,6 +30,7 @@ func run(args []string, inputStream io.Reader) error {
 		seed         = fs.Int64("seed", 0, "random seed (0 means automatic)")
 		maxRetries   = fs.Uint64("retries", 3, "failures allowed (0 means unlimited)")
 		engineChoice = fs.String("engine", "random", "captcha engine to use (banner, math, random by default)")
+		timeOut      = fs.Uint64("timeout", 0, "timeout(in seconds) after which the program exits, 0 turns off timeout")
 	)
 
 	root := &ffcli.Command{
@@ -62,6 +64,11 @@ func run(args []string, inputStream io.Reader) error {
 			}
 			fmt.Println(question)
 
+			// Exit once the timeout is reached
+			if *timeOut != 0 {
+				go QuitAfter(timeOut)
+			}
+
 			// read and check the user input
 			reader := bufio.NewReader(inputStream)
 			for i := uint64(0); *maxRetries == 0 || i < *maxRetries; i++ {
@@ -82,4 +89,9 @@ func run(args []string, inputStream io.Reader) error {
 		},
 	}
 	return root.ParseAndRun(context.Background(), args[1:])
+}
+
+func QuitAfter(timeout *uint64) {
+	time.Sleep(time.Duration(*timeout) * time.Second)
+	os.Exit(5)
 }
