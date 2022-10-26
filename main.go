@@ -93,5 +93,5 @@ func run(args []string, inputStream io.Reader) error {
 
 func QuitAfter(timeout *uint64) {
 	time.Sleep(time.Duration(*timeout) * time.Second)
-	os.Exit(5)
+	os.Exit(255)
 }
