@@ -30,20 +30,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.7.0
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16.x
       - name: Cache Go modules
-        uses: actions/cache@v3.0.4
+        uses: actions/cache@v3.3.3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run GoReleaser (Dry Run)
-        uses: goreleaser/goreleaser-action@v2.7.0
+        uses: goreleaser/goreleaser-action@v2.9.1
         with:
           version: latest
           args: release --rm-dist --snapshot --skip-publish
@@ -52,9 +52,9 @@ jobs:
   golangci-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.7.0
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3.2.0
+        uses: golangci/golangci-lint-action@v3.7.1
         with:
           version: v1.31
           #github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -69,7 +69,7 @@ jobs:
         golang:
           - 1.16.x
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.7.0
       - name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -88,12 +88,12 @@ jobs:
       OS: macos-latest
       GOLANG: ${{ matrix.golang }}
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.7.0
       - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.golang }}
-      - uses: actions/cache@v3.0.4
+      - uses: actions/cache@v3.3.3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ matrix.golang }}-${{ hashFiles('**/go.sum') }}
@@ -131,12 +131,12 @@ jobs:
       OS: ubuntu-latest
       GOLANG: ${{ matrix.golang }}
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.7.0
       - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.golang }}
-      - uses: actions/cache@v3.0.4
+      - uses: actions/cache@v3.3.3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ matrix.golang }}-${{ hashFiles('**/go.sum') }}
